@@ -1,0 +1,36 @@
+# Build targets
+target/
+**/target/
+build/
+**/build/
+dist/
+**/dist/
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+
+# Compiled class files & logs
+*.class
+*.log
+hs_err_pid*
+replay_pid*
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
