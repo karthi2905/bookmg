@@ -1,2 +1,154 @@
-# bookmg
-BookMg -  A Meeting room booking web application
+# BookMg - Enterprise Meeting Room & Resource Booking Platform
+
+A production-grade, microservice-based enterprise resource booking platform built with **Java 17+**, **Spring Boot 3.3.5**, **Spring Cloud 2023.0.3**, **PostgreSQL / H2**, and **React 18 + Vite**.
+
+---
+
+## 1. System Architecture
+
+BookMg implements a microservices architecture adhering to strict bounded contexts, single responsibility, and the **Database-per-Service** pattern.
+
+```
+                              [ React 18 + Vite Frontend ]
+                                     (Port: 5173)
+                                          │
+                                          ▼ HTTP / REST
+                            [ Spring Cloud API Gateway ]
+                                     (Port: 8080)
+                     (JWT Auth Gateway Filter, CORS & Routing)
+                                 /        |        \
+             ┌──────────────────┘         │         └──────────────────┐
+             ▼                            ▼                            ▼
+    [ Auth Service ]            [ Resource Service ]          [ Booking Service ]
+      (Port: 8081)                 (Port: 8082)                  (Port: 8083)
+            │                            │                             │
+            │ Feign                      │                             │ Feign Client
+            │                            └─────────────────────────────┤ (Resource Validation)
+            ▼                                                          ▼
+      [(auth_db)]                      [(resource_db)]              [(booking_db)]
+   PostgreSQL / H2                  PostgreSQL / H2               PostgreSQL / H2
+```
+
+---
+
+## 2. Microservice Modules
+
+| Module | Service | Port | Responsibilities |
+|---|---|---|---|
+| [`api-gateway`](file:///d:/projects/BookMg/api-gateway) | API Gateway | 8080 | Centralized routing, CORS, JWT token validation & claim injection, OpenAPI aggregation |
+| [`auth-service`](file:///d:/projects/BookMg/auth-service) | Auth & User Directory | 8081 | Authentication, JJWT 0.12.6 issuance, users, roles, departments |
+| [`resource-service`](file:///d:/projects/BookMg/resource-service) | Resource Service | 8082 | Resource catalog (rooms, labs, equipment), capacities, locations, JPA Specification dynamic filtering |
+| [`booking-service`](file:///d:/projects/BookMg/booking-service) | Booking & Approvals | 8083 | Single & recurring bookings, atomic conflict detection, approval policy engine, 15-min auto-release scheduler, Java Streams analytics |
+| [`frontend`](file:///d:/projects/BookMg/frontend) | Web App (React) | 5173 | Glassmorphic React 18 SPA: catalog, booking modal, availability grid, my bookings, approvals dashboard, metrics |
+
+---
+
+## 3. Seed Users & Test Credentials
+
+Each service pre-seeds test data automatically on startup for zero-friction testing:
+
+| Email | Password | Role | Department | Access / Privileges |
+|---|---|---|---|---|
+| `admin@bookmg.com` | `admin123` | `ROLE_ADMIN` | IT | Full enterprise access, resource creation, global approvals |
+| `manager@bookmg.com` | `manager123` | `ROLE_MANAGER` | ENGINEERING | Books rooms, approves Engineering department restricted requests |
+| `user@bookmg.com` | `user123` | `ROLE_EMPLOYEE` | ENGINEERING | Standard room bookings & calendar views |
+| `hr@bookmg.com` | `hr123` | `ROLE_MANAGER` | HR | Books rooms, approves HR department restricted requests |
+| `sales@bookmg.com` | `sales123` | `ROLE_EMPLOYEE` | SALES | Standard room bookings & sales meetings |
+
+---
+
+## 4. API Endpoints Overview
+
+All APIs are accessible through the centralized Gateway on `http://localhost:8080`:
+
+### Auth & User Directory (`auth-service`)
+- `POST /api/v1/auth/register` - Create new user account
+- `POST /api/v1/auth/login` - Authenticate and acquire signed JWT
+- `GET /api/v1/auth/me` - Retrieve authenticated user profile
+- `GET /api/v1/users` - List users with department filters
+- `GET /api/v1/users/{id}` - Retrieve user details by ID
+
+### Resource Catalog (`resource-service`)
+- `GET /api/v1/resources` - Dynamic search (filters: `type`, `minCapacity`, `search`, `restricted`)
+- `GET /api/v1/resources/{id}` - Get resource details and amenities
+- `POST /api/v1/resources` - Create new resource (`ROLE_ADMIN` only)
+- `PUT /api/v1/resources/{id}` - Update resource (`ROLE_ADMIN` only)
+- `DELETE /api/v1/resources/{id}` - Delete resource (`ROLE_ADMIN` only)
+
+### Bookings, Approvals & Reports (`booking-service`)
+- `POST /api/v1/bookings` - Create booking (single or recurring with atomic conflict checking)
+- `GET /api/v1/bookings/{id}` - Get booking reservation details
+- `GET /api/v1/bookings/my` - List current user's reservations
+- `GET /api/v1/bookings/resource/{id}` - List bookings for a resource within time window
+- `DELETE /api/v1/bookings/{id}` - Cancel a single booking
+- `DELETE /api/v1/bookings/series/{recurrenceGroupId}` - Cancel an entire recurring series
+- `POST /api/v1/bookings/{id}/checkin` - Confirm attendance within ±15 min window
+- `GET /api/v1/bookings/availability` - Real-time slot availability grid for a date
+- `GET /api/v1/approvals/pending` - Pending approval queue for managers & admins
+- `POST /api/v1/approvals/{id}/approve` - Approve restricted booking
+- `POST /api/v1/approvals/{id}/reject` - Reject restricted booking with note
+- `GET /api/v1/reports/utilisation` - Enterprise resource utilization analytics via Java Streams
+
+---
+
+## 5. Quick Start
+
+### Option A: Local Run with In-Memory H2 (Default)
+Each service runs independently with zero external dependencies in `h2` mode:
+
+```bash
+# 1. Build and test all backend microservices (32 tests)
+mvn clean test
+
+# 2. Start services in separate terminals:
+mvn spring-boot:run -pl auth-service
+mvn spring-boot:run -pl resource-service
+mvn spring-boot:run -pl booking-service
+mvn spring-boot:run -pl api-gateway
+
+# 3. Start the React Frontend:
+cd frontend
+npm install
+npm run dev
+# Visit http://localhost:5173
+```
+
+### Option B: Docker Compose (PostgreSQL Database-per-Service)
+```bash
+# Package service JARs
+mvn clean package -DskipTests
+
+# Start PostgreSQL and all microservices
+docker compose up --build -d
+
+# Visit:
+# Web UI:       http://localhost:5173
+# API Gateway:  http://localhost:8080
+# Swagger UI:   http://localhost:8080/swagger-ui.html
+```
+
+---
+
+## 6. Implementation Status & Daily Progress
+
+### Day 1: Project Architecture & Backlog Setup
+- [x] **PHASE 0: Repo Scaffold, Parent POM, Module Skeletons, Docker-Compose, Database Schemas**
+- [x] **Product Backlog & Agile Requirements Analysis (FR1–FR8 User Stories, 36 Story Points, DoD)**
+
+### Day 2: Foundational Microservices
+- [x] **PHASE 1: Auth Service (Entities, JWT 0.12.6, Register/Login, Seed Data, Security Filters, Integration Tests)**
+- [x] **PHASE 2: Resource Service (Resource Catalog CRUD, Dynamic JPA Specification Filters, Amenities, Integration Tests)**
+
+### Day 3 (Today): Core Scheduling, Concurrency & API Gateway
+- [x] **PHASE 3: Booking Service Core (TimeSlot record, Entities, Atomic Interval Conflict Detection, Feign Client, Tests)**
+- [x] **PHASE 4: Recurrence Strategy & Series Cancellation (Daily, Weekly, Bi-weekly, Monthly with 3-Month Cap)**
+- [x] **PHASE 5: Approvals Workflow (Policy Factory, Restricted Assets, Manager/Admin routing)**
+- [x] **PHASE 6: Check-in & @Scheduled Auto-Release (±15-min Window, Anti-Ghost-Booking Engine)**
+- [x] **PHASE 7: Availability Endpoint & Utilisation Reports (Continuous Grid & Java Streams Analytics)**
+- [x] **PHASE 8: API Gateway (Centralized Routing, Reactive JWT Validation, OpenAPI Aggregation)**
+- [x] **PHASE 10: Dockerization, CONCEPTS.md Architecture Guide & Microservice Verification**
+
+### Upcoming (Day 4):
+- [ ] **PHASE 9: React 18 + Vite Frontend SPA (Catalog, Calendar Grid, Booking Modal, Approvals, Analytics)**
+
+For in-depth architectural and concurrency details, please consult [CONCEPTS.md](file:///d:/projects/BookMg/CONCEPTS.md).
