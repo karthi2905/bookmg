@@ -1,0 +1,114 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        # Auth Service Public Endpoints (Register & Login)
+        - id: auth-service-auth
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/auth/**
+
+        # Auth Service Protected User Directory
+        - id: auth-service-users
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/users/**
+          filters:
+            - JwtAuthentication
+
+        # Resource Service Routes
+        - id: resource-service
+          uri: ${RESOURCE_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/resources/**
+
+        # Booking Service Protected Routes
+        - id: booking-service-bookings
+          uri: ${BOOKING_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/bookings/**
+          filters:
+            - JwtAuthentication
+
+        - id: booking-service-approvals
+          uri: ${BOOKING_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/approvals/**
+          filters:
+            - JwtAuthentication
+
+        - id: booking-service-reports
+          uri: ${BOOKING_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api/v1/reports/**
+          filters:
+            - JwtAuthentication
+
+        # OpenAPI Aggregation Routes
+        - id: openapi-auth
+          uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/api-docs/auth/**
+          filters:
+            - RewritePath=/api-docs/auth(?<segment>/?.*), /api-docs$\{segment}
+
+        - id: openapi-resources
+          uri: ${RESOURCE_SERVICE_URL:http://localhost:8082}
+          predicates:
+            - Path=/api-docs/resources/**
+          filters:
+            - RewritePath=/api-docs/resources(?<segment>/?.*), /api-docs$\{segment}
+
+        - id: openapi-bookings
+          uri: ${BOOKING_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/api-docs/bookings/**
+          filters:
+            - RewritePath=/api-docs/bookings(?<segment>/?.*), /api-docs$\{segment}
+
+# SpringDoc OpenAPI Aggregation for Gateway
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: Auth Service API
+        url: /api-docs/auth
+      - name: Resource Service API
+        url: /api-docs/resources
+      - name: Booking Service API
+        url: /api-docs/bookings
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+# JWT configuration for Gateway Filter
+jwt:
+  secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
