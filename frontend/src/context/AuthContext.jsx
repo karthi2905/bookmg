@@ -13,21 +13,27 @@ export const PRESET_USERS = [
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('bookmg_token'));
+  const [token, setToken] = useState(() => sessionStorage.getItem('bookmg_token'));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Clear any old persistent token from localStorage on fresh boot to ensure logged-out start
+    localStorage.removeItem('bookmg_token');
+
     const initAuth = async () => {
-      const storedToken = localStorage.getItem('bookmg_token');
-      if (storedToken) {
+      const sessionToken = sessionStorage.getItem('bookmg_token');
+      if (sessionToken) {
         try {
           const res = await authApi.getMe();
           setUser(res.data);
-          setToken(storedToken);
+          setToken(sessionToken);
         } catch (err) {
           console.warn('Session expired or invalid, logging out', err);
           logout();
         }
+      } else {
+        setUser(null);
+        setToken(null);
       }
       setLoading(false);
     };
@@ -38,7 +44,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     const res = await authApi.login({ email, password });
     const { accessToken, user } = res.data;
-    localStorage.setItem('bookmg_token', accessToken);
+    sessionStorage.setItem('bookmg_token', accessToken);
     setToken(accessToken);
     if (user) {
       setUser(user);
@@ -58,7 +64,7 @@ export const AuthProvider = ({ children }) => {
       role: role || 'ROLE_EMPLOYEE',
     });
     const { accessToken, user } = res.data;
-    localStorage.setItem('bookmg_token', accessToken);
+    sessionStorage.setItem('bookmg_token', accessToken);
     setToken(accessToken);
     if (user) {
       setUser(user);
@@ -81,6 +87,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    sessionStorage.removeItem('bookmg_token');
     localStorage.removeItem('bookmg_token');
     setToken(null);
     setUser(null);

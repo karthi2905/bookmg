@@ -1,44 +1,45 @@
 import React, { useState } from 'react';
 import { resourceApi } from '../api/client';
-import { 
-  X, 
-  Building, 
-  MapPin, 
-  Users, 
-  ShieldAlert, 
-  Check, 
-  AlertCircle 
+import {
+  X,
+  Building,
+  MapPin,
+  Users,
+  ShieldAlert,
+  Check,
+  AlertCircle
 } from 'lucide-react';
 
 const RESOURCE_TYPES = [
-  { value: 'CONFERENCE_ROOM', label: 'Conference Room' },
-  { value: 'BOARDROOM', label: 'Boardroom' },
-  { value: 'DESK_POD', label: 'Desk Pod' },
-  { value: 'LAB_BENCH', label: 'Lab Bench' },
+  { value: 'MEETING_ROOM', label: 'Meeting Room' },
+  { value: 'LAB', label: 'Laboratory / Bench' },
   { value: 'EQUIPMENT', label: 'Specialized Equipment' },
+  { value: 'CONFERENCE_HALL', label: 'Conference Hall / Auditorium' },
 ];
 
 const COMMON_FEATURES = [
   '4K TV & Video Conf',
   'Whiteboard',
-  'Microphones',
-  'Sound Isolation',
-  'Dual Displays',
-  'Oscilloscope',
-  'Soldering Station',
   'Projector',
-  'Executive Chairs'
+  'Fume hood',
+  'Safety shower',
+  'Oscilloscope',
+  'Soldering station',
+  '3D printer',
+  'GPU workstation',
+  'Sound Isolation',
+  'Dual Displays'
 ];
 
 export default function CreateResourceModal({ onClose, onCreated }) {
   const [name, setName] = useState('');
-  const [type, setType] = useState('CONFERENCE_ROOM');
+  const [type, setType] = useState('MEETING_ROOM');
   const [capacity, setCapacity] = useState(6);
   const [location, setLocation] = useState('Building A - Floor 2');
   const [description, setDescription] = useState('');
   const [restricted, setRestricted] = useState(false);
   const [selectedFeatures, setSelectedFeatures] = useState(['4K TV & Video Conf', 'Whiteboard']);
-  
+
   const [submitting, setSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -70,7 +71,7 @@ export default function CreateResourceModal({ onClose, onCreated }) {
       location: location.trim(),
       restricted,
       description: description.trim() || undefined,
-      features: selectedFeatures
+      features: selectedFeatures,
     };
 
     setSubmitting(true);
@@ -89,161 +90,202 @@ export default function CreateResourceModal({ onClose, onCreated }) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="modal-content"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: '620px',
+          borderRadius: '24px',
+          overflow: 'hidden',
+          border: '1px solid var(--border)',
+          boxShadow: '0 24px 64px rgba(11, 36, 32, 0.22)',
+        }}
+      >
         {/* Header */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="modal-header">
           <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f8fafc' }}>
-              Add Enterprise Resource
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-strong)' }}>
+              Add Catalog Resource
             </h2>
-            <p style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>
-              Register a new meeting room, lab, or equipment in the platform catalog
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '2px' }}>
+              Register a new meeting room, engineering lab, or equipment in BookMg
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}>
-            <X size={20} />
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-ghost"
+            style={{ padding: '4px', border: 'none', cursor: 'pointer' }}
+          >
+            <X size={20} color="var(--text-muted)" />
           </button>
         </div>
 
+        {/* Error Alert */}
         {errorMsg && (
-          <div style={{ margin: '16px 24px 0 24px', padding: '12px 14px', borderRadius: '10px', background: 'rgba(244, 63, 94, 0.15)', border: '1px solid rgba(244, 63, 94, 0.35)', display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.84rem', color: '#fda4af' }}>
-            <AlertCircle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <div
+            style={{
+              margin: '16px 24px 0 24px',
+              padding: '10px 14px',
+              borderRadius: '10px',
+              backgroundColor: 'var(--danger-soft)',
+              border: '1px solid var(--danger)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '13px',
+              color: 'var(--danger)',
+            }}
+          >
+            <AlertCircle size={16} />
             <span>{errorMsg}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ padding: '20px 24px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px', marginBottom: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
-                Resource Name *
-              </label>
-              <input
-                type="text"
-                className="input-field"
-                placeholder="e.g. Quantum Boardroom 4A"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
-                Type *
-              </label>
-              <select
-                className="input-field"
-                value={type}
-                onChange={(e) => setType(e.target.value)}
-              >
-                {RESOURCE_TYPES.map((t) => (
-                  <option key={t.value} value={t.value} style={{ background: '#0f172a' }}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px', marginBottom: '16px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
-                Capacity (People) *
-              </label>
-              <input
-                type="number"
-                min="1"
-                max="200"
-                className="input-field"
-                value={capacity}
-                onChange={(e) => setCapacity(e.target.value)}
-                required
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
-                Location & Floor *
-              </label>
-              <input
-                type="text"
-                className="input-field"
-                placeholder="e.g. Building B - Executive Suite 3"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                required
-              />
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '6px' }}>
-              Description
-            </label>
-            <textarea
-              className="input-field"
-              rows="2"
-              placeholder="Brief overview of room suitability, display setup, etc."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-
-          {/* Features Selection */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: '#cbd5e1', marginBottom: '8px' }}>
-              Amenities & Equipment
-            </label>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {COMMON_FEATURES.map((feat) => {
-                const active = selectedFeatures.includes(feat);
-                return (
-                  <button
-                    key={feat}
-                    type="button"
-                    onClick={() => toggleFeature(feat)}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: '8px',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      border: active ? '1px solid #6366f1' : '1px solid rgba(255,255,255,0.1)',
-                      background: active ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.03)',
-                      color: active ? '#c7d2fe' : '#94a3b8',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {active ? '✓ ' : '+ '} {feat}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Restriction Checkbox */}
-          <div style={{ marginBottom: '24px', padding: '12px 14px', borderRadius: '10px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={restricted}
-                onChange={(e) => setRestricted(e.target.checked)}
-                style={{ width: '18px', height: '18px', accentColor: '#6366f1' }}
-              />
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '16px' }}>
               <div>
-                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#f1f5f9' }}>
-                  Restricted Resource (Requires Manager / Admin Approval)
-                </span>
-                <span style={{ display: 'block', fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
-                  Bookings will be created in PENDING_APPROVAL status and must be signed off before access.
-                </span>
+                <label className="form-label">Resource Name *</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="e.g. Quantum Boardroom 4A"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
               </div>
-            </label>
+
+              <div>
+                <label className="form-label">Type *</label>
+                <select
+                  className="select-field"
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                >
+                  {RESOURCE_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
+              <div>
+                <label className="form-label">Capacity (People) *</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="200"
+                  className="input-field"
+                  value={capacity}
+                  onChange={(e) => setCapacity(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="form-label">Location &amp; Floor *</label>
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="e.g. Building B - Executive Suite 3"
+                  list="campus-locations-list"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  required
+                />
+                <datalist id="campus-locations-list">
+                  <option value="HQ Tower, Floor 8" />
+                  <option value="Cloud Tower, Floor 22" />
+                  <option value="Building B, Floor 2" />
+                  <option value="Building 42, Floor 1" />
+                  <option value="Central Campus, Ground Floor" />
+                  <option value="Bay View Campus, Floor 5" />
+                  <option value="Tech Hub, Ground Floor" />
+                  <option value="Research Complex, Floor 1" />
+                  <option value="Engineering Wing, Floor 1" />
+                  <option value="Commons Pavilion, Ground Floor" />
+                </datalist>
+              </div>
+            </div>
+
+            <div>
+              <label className="form-label">Description</label>
+              <textarea
+                className="textarea-field"
+                rows={2}
+                placeholder="Brief overview of room suitability, specialized setups, etc."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+
+            {/* Features Selection */}
+            <div>
+              <label className="form-label">Amenities &amp; Specialized Equipment</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
+                {COMMON_FEATURES.map((feat) => {
+                  const active = selectedFeatures.includes(feat);
+                  return (
+                    <button
+                      key={feat}
+                      type="button"
+                      onClick={() => toggleFeature(feat)}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: 'var(--radius-pill)',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        cursor: 'pointer',
+                        border: '1px solid',
+                        borderColor: active ? 'var(--primary)' : 'var(--border)',
+                        backgroundColor: active ? 'var(--accent-lime-soft)' : 'var(--bg-subtle)',
+                        color: active ? 'var(--text-strong)' : 'var(--text-body)',
+                        transition: 'all var(--transition-fast)',
+                      }}
+                    >
+                      {active ? '✓ ' : '+ '} {feat}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Restriction Checkbox */}
+            <div
+              style={{
+                padding: '12px',
+                borderRadius: '10px',
+                backgroundColor: 'var(--bg-subtle)',
+                border: '1px solid var(--border)',
+              }}
+            >
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={restricted}
+                  onChange={(e) => setRestricted(e.target.checked)}
+                  style={{ width: '16px', height: '16px', accentColor: 'var(--primary)', marginTop: '2px' }}
+                />
+                <div>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-strong)' }}>
+                    Restricted Resource (Requires Signoff)
+                  </span>
+                  <span style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                    Reservations will be submitted in PENDING_APPROVAL status and must be signed off by a manager or administrator.
+                  </span>
+                </div>
+              </label>
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+          {/* Sticky Footer */}
+          <div className="modal-footer">
             <button
               type="button"
               className="btn btn-secondary"
@@ -265,4 +307,3 @@ export default function CreateResourceModal({ onClose, onCreated }) {
     </div>
   );
 }
-

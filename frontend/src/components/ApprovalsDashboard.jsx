@@ -1,30 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { approvalApi } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { 
-  CheckSquare, 
-  Check, 
-  X, 
-  Clock, 
-  Building, 
-  User, 
+import { LAB_REQUIREMENTS_MAP, DEFAULT_LAB_REQUIREMENTS } from '../constants/facilities';
+import {
+  ShieldCheck,
+  Check,
+  X,
+  Clock,
+  Building,
+  User,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  Calendar,
+  CheckCircle2,
+  Repeat,
+  FileText
 } from 'lucide-react';
 
 export default function ApprovalsDashboard({ onUpdateCount }) {
   const { user } = useAuth();
   const [pendingList, setPendingList] = useState([]);
+  const [selectedItem, setSelectedItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [decisionNotes, setDecisionNotes] = useState({});
   const [alert, setAlert] = useState({ text: '', type: '' });
+  const [processingId, setProcessingId] = useState(null);
 
   const fetchPending = async () => {
     setLoading(true);
     try {
       const res = await approvalApi.getPending();
-      setPendingList(res.data);
-      if (onUpdateCount) onUpdateCount(res.data.length);
+      const list = res.data || [];
+      setPendingList(list);
+      if (onUpdateCount) onUpdateCount(list.length);
+      if (list.length > 0) {
+        setSelectedItem(list[0]);
+      } else {
+        setSelectedItem(null);
+      }
     } catch (err) {
       console.error('Failed to load pending approvals:', err);
     } finally {
@@ -37,153 +50,341 @@ export default function ApprovalsDashboard({ onUpdateCount }) {
   }, []);
 
   const handleApprove = async (id) => {
+    setProcessingId(id);
     try {
-      const note = decisionNotes[id] || 'Approved by Manager';
+      const note = decisionNotes[id] || 'Approved by Approver';
       await approvalApi.approve(id, note);
-      setAlert({ text: 'Booking successfully approved!', type: 'success' });
+      setAlert({ text: 'Booking request approved and confirmed!', type: 'success' });
       fetchPending();
     } catch (err) {
       setAlert({ text: err.response?.data?.message || 'Failed to approve booking.', type: 'error' });
+    } finally {
+      setProcessingId(null);
     }
   };
 
   const handleReject = async (id) => {
+    setProcessingId(id);
     try {
-      const note = decisionNotes[id] || 'Rejected by Manager';
+      const note = decisionNotes[id] || 'Rejected by Approver';
       await approvalApi.reject(id, note);
-      setAlert({ text: 'Booking request rejected.', type: 'success' });
+      setAlert({ text: 'Booking request rejected and released.', type: 'success' });
       fetchPending();
     } catch (err) {
       setAlert({ text: err.response?.data?.message || 'Failed to reject booking.', type: 'error' });
+    } finally {
+      setProcessingId(null);
     }
   };
 
   return (
-    <div style={{ maxWidth: '1400px', margin: '0 auto', padding: '0 24px 40px 24px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+    <div style={{ maxWidth: '1280px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 800, color: '#f8fafc' }}>
-            Restricted Resource Approvals
-          </h2>
-          <p style={{ fontSize: '0.88rem', color: '#94a3b8', marginTop: '4px' }}>
-            Review pending requests for executive boardrooms, specialized research labs, and restricted AV equipment.
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-strong)', letterSpacing: '-0.02em' }}>
+            Approvals Queue
+          </h1>
+          <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px' }}>
+            Review and sign off on restricted facilities, lab equipment, and boardroom bookings.
           </p>
         </div>
 
-        <button onClick={fetchPending} className="btn btn-secondary btn-sm">
+        <button
+          type="button"
+          onClick={fetchPending}
+          className="btn btn-outline btn-sm"
+        >
           <RefreshCw size={14} /> Refresh Queue
         </button>
       </div>
 
+      {/* Alert Notification */}
       {alert.text && (
         <div
           style={{
-            padding: '12px 18px',
+            padding: '12px 16px',
             borderRadius: '12px',
-            marginBottom: '20px',
-            background: alert.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(244, 63, 94, 0.15)',
-            border: `1px solid ${alert.type === 'success' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(244, 63, 94, 0.3)'}`,
-            color: alert.type === 'success' ? '#34d399' : '#f87171',
-            fontSize: '0.88rem',
+            backgroundColor: alert.type === 'success' ? 'var(--success-soft)' : 'var(--danger-soft)',
+            border: `1px solid ${alert.type === 'success' ? 'var(--success)' : 'var(--danger)'}`,
+            color: alert.type === 'success' ? 'var(--success)' : 'var(--danger)',
+            fontSize: '13px',
             display: 'flex',
-            justifyContent: 'space-between'
+            alignItems: 'center',
+            justifyContent: 'space-between',
           }}
         >
           <span>{alert.text}</span>
-          <button onClick={() => setAlert({ text: '', type: '' })} style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer' }}>×</button>
+          <button
+            type="button"
+            onClick={() => setAlert({ text: '', type: '' })}
+            style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
         </div>
       )}
 
+      {/* Content Area */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>Loading pending approvals...</div>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-muted)' }}>
+          Loading approval requests...
+        </div>
       ) : pendingList.length === 0 ? (
-        <div className="glass-panel" style={{ textAlign: 'center', padding: '60px 20px', color: '#94a3b8' }}>
-          <CheckSquare size={36} color="#10b981" style={{ margin: '0 auto 12px auto' }} />
-          <h3 style={{ fontSize: '1.15rem', color: '#f8fafc', fontWeight: 700 }}>Approval Queue is Clear</h3>
-          <p style={{ fontSize: '0.88rem', marginTop: '4px' }}>No pending restricted resource requests awaiting your review.</p>
+        <div
+          className="card"
+          style={{
+            textAlign: 'center',
+            padding: '64px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '12px',
+          }}
+        >
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: 'var(--success-soft)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ShieldCheck size={26} color="var(--success)" />
+          </div>
+          <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-strong)' }}>
+            Approval Queue is Empty
+          </h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '400px' }}>
+            There are currently no pending restricted resource bookings awaiting your approval.
+          </p>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {pendingList.map((item) => {
-            const dateStr = item.startTime.split('T')[0];
-            const startTimeStr = item.startTime.split('T')[1].substring(0, 5);
-            const endTimeStr = item.endTime.split('T')[1].substring(0, 5);
+        /* Two-Pane Layout */
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1.4fr)',
+            gap: '24px',
+            alignItems: 'start',
+          }}
+          className="approvals-two-pane"
+        >
+          {/* LEFT PANE: Request List */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+              Pending Requests ({pendingList.length})
+            </div>
 
-            return (
-              <div
-                key={item.id}
-                className="glass-panel"
-                style={{
-                  padding: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '24px',
-                  flexWrap: 'wrap'
-                }}
-              >
-                {/* Details */}
-                <div style={{ flex: '1 1 400px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                    <span className="badge badge-pending">Pending Approval</span>
-                    <span className="badge badge-restricted">Restricted Asset</span>
+            {pendingList.map((item) => {
+              const isSelected = selectedItem?.id === item.id;
+              const dateStr = item.startTime?.split('T')[0];
+              const sTime = item.startTime?.split('T')[1]?.substring(0, 5);
+              const eTime = item.endTime?.split('T')[1]?.substring(0, 5);
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => setSelectedItem(item)}
+                  className="card"
+                  style={{
+                    padding: '16px',
+                    cursor: 'pointer',
+                    border: '1px solid',
+                    borderColor: isSelected ? 'var(--primary)' : 'var(--border)',
+                    backgroundColor: isSelected ? 'var(--bg-subtle)' : 'var(--bg-card)',
+                    boxShadow: isSelected ? 'var(--shadow-popover)' : 'var(--shadow-card)',
+                    transition: 'all var(--transition-fast)',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span className="badge badge-pending">
+                      <span className="badge-dot" /> Pending Review
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                      {dateStr}
+                    </span>
                   </div>
 
-                  <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#f8fafc', marginBottom: '6px' }}>
+                  <h3
+                    style={{
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: 'var(--text-strong)',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      marginBottom: '4px',
+                    }}
+                  >
                     {item.title}
                   </h3>
 
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '0.84rem', color: '#94a3b8', marginBottom: '12px' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#e2e8f0', fontWeight: 600 }}>
-                      <Building size={14} color="#6366f1" /> {item.resourceName}
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <User size={14} color="#06b6d4" /> {item.userEmail} ({item.department})
-                    </span>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <Clock size={14} color="#f59e0b" /> {dateStr} • {startTimeStr} - {endTimeStr}
-                    </span>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 500, color: 'var(--text-strong)' }}>{item.resourceName}</span>
+                    <span>•</span>
+                    <span>{sTime} - {eTime}</span>
                   </div>
 
-                  {item.description && (
-                    <p style={{ fontSize: '0.82rem', color: '#94a3b8', fontStyle: 'italic', marginBottom: '12px' }}>
-                      "{item.description}"
-                    </p>
-                  )}
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                    Requested by: <strong>{item.userEmail}</strong> ({item.department || 'EMPLOYEE'})
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-                  {/* Note Input */}
-                  <input
-                    type="text"
-                    placeholder="Optional feedback / approval note..."
-                    value={decisionNotes[item.id] || ''}
-                    onChange={(e) => setDecisionNotes({ ...decisionNotes, [item.id]: e.target.value })}
-                    className="input-field"
-                    style={{ fontSize: '0.82rem', padding: '6px 12px', maxWidth: '420px' }}
-                  />
+          {/* RIGHT PANE: Detail Pane */}
+          {selectedItem ? (
+            <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {/* Header */}
+              <div style={{ paddingBottom: '16px', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                  <span className="badge badge-pending">
+                    <span className="badge-dot" /> Action Required
+                  </span>
+                  <span className="badge" style={{ backgroundColor: 'var(--bg-subtle)', color: 'var(--text-body)' }}>
+                    Restricted Asset
+                  </span>
                 </div>
 
-                {/* Approve/Reject Buttons */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <button
-                    onClick={() => handleReject(item.id)}
-                    className="btn btn-danger btn-sm"
-                  >
-                    <X size={15} /> Reject
-                  </button>
-
-                  <button
-                    onClick={() => handleApprove(item.id)}
-                    className="btn btn-success btn-sm"
-                  >
-                    <Check size={15} /> Approve Reservation
-                  </button>
+                <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-strong)' }}>
+                  {selectedItem.title}
+                </h2>
+                <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Reference ID: #{selectedItem.id}
                 </div>
               </div>
-            );
-          })}
+
+              {/* Requester & Resource Information */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: '16px',
+                  backgroundColor: 'var(--bg-subtle)',
+                  padding: '16px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border)',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Requester
+                  </div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-strong)', marginTop: '2px' }}>
+                    {selectedItem.userEmail}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    Dept: {selectedItem.department || 'ENGINEERING'}
+                  </div>
+                </div>
+
+                <div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 600 }}>
+                    Target Facility
+                  </div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-strong)', marginTop: '2px' }}>
+                    {selectedItem.resourceName}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    {selectedItem.startTime?.split('T')[0]} • {selectedItem.startTime?.split('T')[1]?.substring(0, 5)} - {selectedItem.endTime?.split('T')[1]?.substring(0, 5)}
+                  </div>
+                </div>
+              </div>
+
+              {/* Purpose & Notes */}
+              {selectedItem.description && (
+                <div>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    Purpose / Notes
+                  </div>
+                  <p style={{ fontSize: '13px', color: 'var(--text-strong)', lineHeight: 1.5, fontStyle: 'italic' }}>
+                    "{selectedItem.description}"
+                  </p>
+                </div>
+              )}
+
+              {/* Requirements Acknowledged (Checklist Status) */}
+              <div>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>
+                  Safety &amp; Compliance Checklist (Acknowledged by Requester)
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {(LAB_REQUIREMENTS_MAP[selectedItem.resourceName] || DEFAULT_LAB_REQUIREMENTS).map((req, idx) => (
+                    <div
+                      key={idx}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        fontSize: '12px',
+                        color: 'var(--text-strong)',
+                        backgroundColor: 'var(--success-soft)',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                      }}
+                    >
+                      <CheckCircle2 size={14} color="var(--success)" style={{ flexShrink: 0 }} />
+                      <span>{req}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Decision Note Textarea */}
+              <div>
+                <label className="form-label">Approver Feedback / Comments (Optional)</label>
+                <textarea
+                  placeholder="Provide guidance, required safety conditions, or reason..."
+                  value={decisionNotes[selectedItem.id] || ''}
+                  onChange={(e) => setDecisionNotes({ ...decisionNotes, [selectedItem.id]: e.target.value })}
+                  className="textarea-field"
+                  rows={2}
+                  style={{ fontSize: '13px' }}
+                />
+              </div>
+
+              {/* Action Buttons: Approve (dark) and Reject (outlined danger) */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: '12px',
+                  paddingTop: '16px',
+                  borderTop: '1px solid var(--border)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleReject(selectedItem.id)}
+                  disabled={processingId === selectedItem.id}
+                  className="btn btn-danger"
+                >
+                  <X size={15} /> Reject Request
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleApprove(selectedItem.id)}
+                  disabled={processingId === selectedItem.id}
+                  className="btn btn-primary"
+                >
+                  <Check size={15} /> Approve Reservation
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+              Select a request from the left list to review details.
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
-

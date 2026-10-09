@@ -1,28 +1,30 @@
 import React, { useState } from 'react';
 import { useAuth, PRESET_USERS } from '../context/AuthContext';
-import { 
-  Calendar, 
-  LogIn, 
-  UserPlus, 
-  Mail, 
-  Lock, 
-  User, 
-  Building2, 
-  Shield, 
-  AlertCircle, 
+import {
+  LogIn,
+  UserPlus,
+  Mail,
+  Lock,
+  User,
+  Building2,
+  Shield,
+  AlertCircle,
   CheckCircle,
   X,
-  Sparkles
+  Sparkles,
+  Building,
+  Calendar,
+  Layers
 } from 'lucide-react';
 
 export default function AuthModal({ isOpen, onClose, onSuccess }) {
   const { login, register, quickSwitch } = useAuth();
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'register'
-  
+
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  
+
   // Register form state
   const [regFullName, setRegFullName] = useState('');
   const [regEmail, setRegEmail] = useState('');
@@ -53,7 +55,7 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
       setTimeout(() => {
         onSuccess?.(user);
         onClose?.();
-      }, 600);
+      }, 500);
     } catch (err) {
       console.error('Login error:', err);
       const msg = err.response?.data?.message || err.message || 'Invalid email or password.';
@@ -91,14 +93,14 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
         role: regRole,
       });
 
-      setSuccessMsg(`Account created for ${user.fullName}! Stored in database.`);
+      setSuccessMsg(`Account created for ${user.fullName}!`);
       setTimeout(() => {
         onSuccess?.(user);
         onClose?.();
-      }, 800);
+      }, 600);
     } catch (err) {
       console.error('Registration error:', err);
-      const msg = err.response?.data?.message || err.message || 'Failed to create account. Email may already be registered.';
+      const msg = err.response?.data?.message || err.message || 'Failed to create account.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -110,11 +112,11 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
     setLoading(true);
     try {
       const user = await quickSwitch(preset);
-      setSuccessMsg(`Logged in as ${preset.name} (${preset.dept})`);
+      setSuccessMsg(`Signed in as ${preset.name} (${preset.dept})`);
       setTimeout(() => {
         onSuccess?.(user);
         onClose?.();
-      }, 500);
+      }, 400);
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed for demo persona.');
     } finally {
@@ -123,372 +125,338 @@ export default function AuthModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <div className="modal-overlay" style={{ animation: 'fadeIn 0.2s ease-out' }}>
-      <div 
-        className="modal-content" 
-        style={{ 
-          maxWidth: '520px', 
-          width: '100%',
-          padding: '0',
+    <div className="modal-overlay" onClick={onClose}>
+      <div
+        className="modal-content auth-split-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          maxWidth: '820px',
+          width: '90vw',
+          padding: 0,
+          display: 'grid',
+          gridTemplateColumns: '1fr 1.3fr',
           overflow: 'hidden',
-          background: '#0d1322',
-          border: '1px solid rgba(99, 102, 241, 0.25)',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(99, 102, 241, 0.15)'
+          borderRadius: '24px',
+          border: '1px solid var(--border)',
+          boxShadow: '0 24px 64px rgba(11, 36, 32, 0.22), 0 8px 24px rgba(16, 24, 40, 0.08)',
         }}
       >
-        {/* Modal Top Banner */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%)',
-          padding: '24px 28px 18px 28px',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          position: 'relative'
-        }}>
-          <button
-            onClick={onClose}
+        {/* LEFT BRAND PANEL in --primary with lime accent shapes and tagline */}
+        <div
+          style={{
+            backgroundColor: 'var(--primary)',
+            color: '#FFFFFF',
+            padding: '36px 32px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            position: 'relative',
+            overflow: 'hidden',
+          }}
+          className="auth-left-brand-panel"
+        >
+          {/* Decorative subtle lime accents */}
+          <div
             style={{
               position: 'absolute',
-              top: '20px',
-              right: '20px',
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: 'none',
-              borderRadius: '8px',
-              color: '#94a3b8',
-              cursor: 'pointer',
-              padding: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
+              top: '-40px',
+              right: '-40px',
+              width: '140px',
+              height: '140px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(200, 245, 96, 0.08)',
+              pointerEvents: 'none',
             }}
-          >
-            <X size={18} />
-          </button>
+          />
+          <div
+            style={{
+              position: 'absolute',
+              bottom: '-20px',
+              left: '-20px',
+              width: '100px',
+              height: '100px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(200, 245, 96, 0.06)',
+              pointerEvents: 'none',
+            }}
+          />
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-            <div style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 15px rgba(99, 102, 241, 0.4)'
-            }}>
-              <Calendar size={20} color="#fff" />
+          <div>
+            {/* Logo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '28px' }}>
+              <div
+                style={{
+                  width: '38px',
+                  height: '38px',
+                  borderRadius: '10px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Building size={20} color="var(--accent-lime)" strokeWidth={2} />
+              </div>
+              <div>
+                <div style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+                  BookMg
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                  Workplace Scheduling
+                </div>
+              </div>
             </div>
-            <div>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#f8fafc', letterSpacing: '-0.02em', margin: 0 }}>
-                BookMg Platform
-              </h2>
-              <span style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 600, letterSpacing: '0.04em' }}>
-                ENTERPRISE RESOURCE &amp; SCHEDULING
-              </span>
-            </div>
+
+            <h2 style={{ fontSize: '22px', fontWeight: 700, lineHeight: 1.3, color: '#FFFFFF', marginBottom: '14px' }}>
+              Internal meeting room, lab and equipment booking.
+            </h2>
+            <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.8)', lineHeight: 1.6 }}>
+              Reserve conference spaces, research equipment, and hardware workbenches with atomic conflict prevention and automated 15-minute check-in release.
+            </p>
           </div>
 
-          <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '4px 0 0 0', lineHeight: 1.5 }}>
-            {activeTab === 'login' 
-              ? 'Sign in to access your reservations, schedule rooms, and approve team requests.' 
-              : 'Register your enterprise account. Details will be stored and processed in database.'}
-          </p>
-        </div>
-
-        {/* Tab Switcher */}
-        <div style={{
-          display: 'flex',
-          padding: '6px 28px',
-          background: '#090d16',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-          gap: '8px'
-        }}>
-          <button
-            type="button"
-            onClick={() => { setActiveTab('login'); setError(''); }}
-            style={{
-              flex: 1,
-              padding: '10px',
-              borderRadius: '8px',
-              border: 'none',
-              background: activeTab === 'login' ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-              color: activeTab === 'login' ? '#818cf8' : '#94a3b8',
-              fontWeight: 600,
-              fontSize: '0.88rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <LogIn size={16} /> Sign In
-          </button>
-
-          <button
-            type="button"
-            onClick={() => { setActiveTab('register'); setError(''); }}
-            style={{
-              flex: 1,
-              padding: '10px',
-              borderRadius: '8px',
-              border: 'none',
-              background: activeTab === 'register' ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-              color: activeTab === 'register' ? '#818cf8' : '#94a3b8',
-              fontWeight: 600,
-              fontSize: '0.88rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <UserPlus size={16} /> Create Account
-          </button>
-        </div>
-
-        {/* Form Body */}
-        <div style={{ padding: '24px 28px' }}>
-          {/* Status Banners */}
-          {error && (
-            <div style={{
-              padding: '10px 14px',
-              borderRadius: '10px',
-              background: 'rgba(244, 63, 94, 0.15)',
-              border: '1px solid rgba(244, 63, 94, 0.3)',
-              color: '#f87171',
-              fontSize: '0.84rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '18px'
-            }}>
-              <AlertCircle size={16} />
-              <span>{error}</span>
+          {/* Quick Demo Personas in left panel */}
+          <div style={{ marginTop: '28px', paddingTop: '18px', borderTop: '1px solid rgba(255,255,255,0.12)' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--accent-lime)', textTransform: 'uppercase', marginBottom: '8px' }}>
+              1-Click Demo Personas:
             </div>
-          )}
-
-          {successMsg && (
-            <div style={{
-              padding: '10px 14px',
-              borderRadius: '10px',
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#34d399',
-              fontSize: '0.84rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              marginBottom: '18px'
-            }}>
-              <CheckCircle size={16} />
-              <span>{successMsg}</span>
-            </div>
-          )}
-
-          {/* LOGIN FORM */}
-          {activeTab === 'login' && (
-            <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Mail size={14} color="#818cf8" /> Work Email
-                </label>
-                <input
-                  type="email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="e.g. user@bookmg.com or manager@bookmg.com"
-                  className="input-field"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Lock size={14} color="#818cf8" /> Password
-                </label>
-                <input
-                  type="password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  className="input-field"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  marginTop: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                {loading ? 'Authenticating...' : (
-                  <>
-                    <LogIn size={18} /> Sign In to BookMg
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-
-          {/* REGISTER FORM */}
-          {activeTab === 'register' && (
-            <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div>
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <User size={14} color="#818cf8" /> Full Name
-                </label>
-                <input
-                  type="text"
-                  value={regFullName}
-                  onChange={(e) => setRegFullName(e.target.value)}
-                  placeholder="e.g. Karthikeyan S or Jane Smith"
-                  className="input-field"
-                  autoFocus
-                />
-              </div>
-
-              <div>
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Mail size={14} color="#818cf8" /> Enterprise Work Email
-                </label>
-                <input
-                  type="email"
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
-                  placeholder="e.g. karthik@enterprise.com"
-                  className="input-field"
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Building2 size={14} color="#818cf8" /> Department
-                  </label>
-                  <select
-                    value={regDepartment}
-                    onChange={(e) => setRegDepartment(e.target.value)}
-                    className="select-field"
-                  >
-                    <option value="ENGINEERING">Engineering</option>
-                    <option value="PRODUCT">Product</option>
-                    <option value="IT">Information Tech</option>
-                    <option value="HR">Human Resources</option>
-                    <option value="SALES">Sales</option>
-                    <option value="MARKETING">Marketing</option>
-                    <option value="EXECUTIVE">Executive</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Shield size={14} color="#818cf8" /> Account Role
-                  </label>
-                  <select
-                    value={regRole}
-                    onChange={(e) => setRegRole(e.target.value)}
-                    className="select-field"
-                  >
-                    <option value="ROLE_EMPLOYEE">Employee (Bookings)</option>
-                    <option value="ROLE_MANAGER">Manager (Approvals)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <Lock size={14} color="#818cf8" /> Password (Min 6 chars)
-                </label>
-                <input
-                  type="password"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  placeholder="Create a strong password"
-                  className="input-field"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn btn-primary"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  fontSize: '0.95rem',
-                  fontWeight: 600,
-                  marginTop: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                {loading ? 'Creating in Database...' : (
-                  <>
-                    <UserPlus size={18} /> Register &amp; Start Booking
-                  </>
-                )}
-              </button>
-            </form>
-          )}
-
-          {/* Quick Demo Switcher Section */}
-          <div style={{ marginTop: '24px', paddingTop: '18px', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between', 
-              marginBottom: '10px' 
-            }}>
-              <span style={{ fontSize: '0.74rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.04em' }}>
-                Or sign in as demo persona:
-              </span>
-              <span style={{ fontSize: '0.72rem', color: '#818cf8', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Sparkles size={12} /> 1-Click Fast Access
-              </span>
-            </div>
-
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {PRESET_USERS.map((preset) => (
+              {PRESET_USERS.slice(0, 3).map((p) => (
                 <button
-                  key={preset.email}
+                  key={p.email}
                   type="button"
+                  onClick={() => handleQuickSelect(p)}
                   disabled={loading}
-                  onClick={() => handleQuickSelect(preset)}
                   style={{
-                    padding: '6px 10px',
-                    borderRadius: '8px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    color: '#e2e8f0',
-                    fontSize: '0.78rem',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#FFFFFF',
+                    fontSize: '11px',
+                    fontWeight: 500,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    transition: 'all 0.15s ease'
+                    gap: '4px',
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(99, 102, 241, 0.15)'}
-                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)'}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'rgba(200, 245, 96, 0.2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.12)')}
                 >
-                  <span style={{ fontWeight: 600 }}>{preset.name}</span>
-                  <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>({preset.role.replace('ROLE_', '')})</span>
+                  <span>{p.name.split(' ')[0]}</span>
+                  <span style={{ fontSize: '10px', opacity: 0.7 }}>({p.role.replace('ROLE_', '')})</span>
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* RIGHT WHITE FORM CARD */}
+        <div style={{ padding: '32px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', backgroundColor: 'var(--bg-card)', position: 'relative' }}>
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-ghost"
+            style={{ position: 'absolute', top: '16px', right: '16px', padding: '6px', border: 'none', cursor: 'pointer' }}
+          >
+            <X size={18} color="var(--text-muted)" />
+          </button>
+
+          <div>
+            {/* Tab switch: Sign In / Create Account */}
+            <div
+              style={{
+                display: 'flex',
+                backgroundColor: 'var(--bg-subtle)',
+                padding: '3px',
+                borderRadius: '8px',
+                border: '1px solid var(--border)',
+                marginBottom: '20px',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => { setActiveTab('login'); setError(''); }}
+                className="btn btn-sm"
+                style={{
+                  flex: 1,
+                  backgroundColor: activeTab === 'login' ? 'var(--bg-card)' : 'transparent',
+                  color: activeTab === 'login' ? 'var(--text-strong)' : 'var(--text-muted)',
+                  boxShadow: activeTab === 'login' ? 'var(--shadow-sm)' : 'none',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                }}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('register'); setError(''); }}
+                className="btn btn-sm"
+                style={{
+                  flex: 1,
+                  backgroundColor: activeTab === 'register' ? 'var(--bg-card)' : 'transparent',
+                  color: activeTab === 'register' ? 'var(--text-strong)' : 'var(--text-muted)',
+                  boxShadow: activeTab === 'register' ? 'var(--shadow-sm)' : 'none',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                }}
+              >
+                Create Account
+              </button>
+            </div>
+
+            {/* Alert / Errors */}
+            {error && (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--danger-soft)',
+                  border: '1px solid var(--danger)',
+                  color: 'var(--danger)',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginBottom: '14px',
+                }}
+              >
+                <AlertCircle size={14} />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {successMsg && (
+              <div
+                style={{
+                  padding: '8px 12px',
+                  borderRadius: '8px',
+                  backgroundColor: 'var(--success-soft)',
+                  border: '1px solid var(--success)',
+                  color: 'var(--success)',
+                  fontSize: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginBottom: '14px',
+                }}
+              >
+                <CheckCircle size={14} />
+                <span>{successMsg}</span>
+              </div>
+            )}
+
+            {/* Form */}
+            {activeTab === 'login' ? (
+              <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div>
+                  <label className="form-label">Enterprise Work Email</label>
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    placeholder="e.g. user@bookmg.com or manager@bookmg.com"
+                    className="input-field"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label">Password</label>
+                  <input
+                    type="password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Enter password"
+                    className="input-field"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-primary"
+                  style={{ width: '100%', minHeight: '44px', fontWeight: 600, marginTop: '8px' }}
+                >
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div>
+                  <label className="form-label">Full Name</label>
+                  <input
+                    type="text"
+                    value={regFullName}
+                    onChange={(e) => setRegFullName(e.target.value)}
+                    placeholder="e.g. Karthik S"
+                    className="input-field"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="form-label">Work Email</label>
+                  <input
+                    type="email"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    placeholder="e.g. karthik@bookmg.com"
+                    className="input-field"
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label className="form-label">Department</label>
+                    <select
+                      value={regDepartment}
+                      onChange={(e) => setRegDepartment(e.target.value)}
+                      className="select-field"
+                    >
+                      <option value="ENGINEERING">Engineering</option>
+                      <option value="PRODUCT">Product</option>
+                      <option value="IT">IT</option>
+                      <option value="HR">HR</option>
+                      <option value="SALES">Sales</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="form-label">Role</label>
+                    <select
+                      value={regRole}
+                      onChange={(e) => setRegRole(e.target.value)}
+                      className="select-field"
+                    >
+                      <option value="ROLE_EMPLOYEE">Employee</option>
+                      <option value="ROLE_MANAGER">Manager</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="form-label">Password (Min 6 chars)</label>
+                  <input
+                    type="password"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    placeholder="Create password"
+                    className="input-field"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn btn-primary"
+                  style={{ width: '100%', minHeight: '44px', fontWeight: 600, marginTop: '6px' }}
+                >
+                  {loading ? 'Creating account...' : 'Create Account'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       </div>

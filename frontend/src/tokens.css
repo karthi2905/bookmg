@@ -1,0 +1,82 @@
+/* BookMg Design System Tokens */
+:root {
+  /* Surfaces & Backgrounds */
+  --bg-page: #F4F6F8;
+  --bg-card: #FFFFFF;
+  --bg-subtle: #F8F9FB; /* panels, inputs, side panels */
+  --border: #E6E9EE;
+  --border-focus: #0B2420;
+
+  /* Typography Colors */
+  --text-strong: #0E1A1A;
+  --text-body: #3A4747;
+  --text-muted: #8A94A6;
+
+  /* Brand & Accents */
+  --primary: #0B2420; /* deep green-black */
+  --primary-hover: #12332D;
+  --accent-lime: #C8F560; /* tags, highlights, primary CTA on dark */
+  --accent-lime-soft: #E6F6C9; /* active sidebar item background */
+
+  /* Calendar / Slot Statuses */
+  --booked-bg: #E7F4E2;
+  --booked-border: #1F4D36; /* booked slot card with 3px left border */
+  --unavailable-bg: #EEF0F8;
+  --unavailable-text: #9AA2B8;
+
+  /* Semantic Alerts & Badges */
+  --success: #2E9E5B;
+  --success-soft: #E3F5EA;
+  --warning: #B7791F;
+  --warning-soft: #FFF6D9;
+  --warning-border: #F1D98A;
+  --danger: #E5484D;
+  --danger-soft: #FDECEC;
+  --info: #2563EB;
+  --info-soft: #EAF0FF;
+
+  /* Typography Scale */
+  --font-family: 'Plus Jakarta Sans', 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 32px;
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-input: 10px;
+  --radius-button: 10px;
+  --radius-image: 12px;
+  --radius-card: 16px;
+  --radius-navbar: 20px;
+  --radius-modal: 24px;
+  --radius-pill: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 16px rgba(16, 24, 40, 0.05);
+  --shadow-popover: 0 8px 24px rgba(16, 24, 40, 0.08);
+  --shadow-modal: 0 20px 48px rgba(16, 24, 40, 0.12);
+
+  /* Spacing Grid (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  /* Z-Index Hierarchy */
+  --z-base: 0;
+  --z-sticky: 10;
+  --z-dropdown: 20;
+  --z-modal: 30;
+  --z-toast: 40;
+
+  /* Motion */
+  --transition-fast: 150ms ease;
+}
