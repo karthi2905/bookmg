@@ -1,8 +1,8 @@
 package com.bookmg.gateway.filter;
 
 import com.bookmg.gateway.security.JwtTokenValidator;
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.io.buffer.DataBuffer;
@@ -18,10 +18,11 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 
-@Slf4j
 @Component
 public class JwtAuthenticationGatewayFilterFactory
         extends AbstractGatewayFilterFactory<JwtAuthenticationGatewayFilterFactory.Config> {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationGatewayFilterFactory.class);
 
     private final JwtTokenValidator jwtTokenValidator;
 
@@ -80,9 +81,16 @@ public class JwtAuthenticationGatewayFilterFactory
         return response.writeWith(Mono.just(buffer));
     }
 
-    @Data
     public static class Config {
         // Optional configuration properties if needed
         private boolean enabled = true;
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
     }
 }
