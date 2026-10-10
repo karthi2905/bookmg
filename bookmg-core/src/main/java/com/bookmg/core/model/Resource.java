@@ -1,36 +1,27 @@
 package com.bookmg.core.model;
 
-import java.util.Objects;
-
 /**
  * Domain entity representing a reservable meeting room, laboratory, or AV equipment.
- * Demonstrates encapsulation, input validation, constructor chaining, static ID generation,
- * and standard object contracts.
+ * Extends BaseEntity to inherit unified identity, audit timestamps, and state tracking.
  */
-public class Resource {
+public class Resource extends BaseEntity {
     private static int resourceCounter = 1000;
 
-    private String id;
-    private String name;
-    private ResourceType type;
-    private int capacity;
-    private String location;
-    private boolean restricted;
+    protected String name;
+    protected ResourceType type;
+    protected int capacity;
+    protected String location;
+    protected boolean restricted;
 
     /**
-     * Default constructor for serialization / framework reflection.
+     * Default constructor for frameworks and serialization.
      */
     public Resource() {
+        super();
     }
 
     /**
      * Convenience constructor chaining to full constructor with static ID generation.
-     *
-     * @param name       human-readable resource label
-     * @param type       classification of the resource
-     * @param capacity   maximum attendee / occupancy limit
-     * @param location   physical campus building or floor
-     * @param restricted whether reservation requires managerial authorization
      */
     public Resource(String name, ResourceType type, int capacity, String location, boolean restricted) {
         this(generateNextId(), name, type, capacity, location, restricted);
@@ -38,16 +29,9 @@ public class Resource {
 
     /**
      * Full primary constructor with encapsulation validations.
-     *
-     * @param id         unique resource identifier
-     * @param name       human-readable resource label
-     * @param type       classification of the resource
-     * @param capacity   maximum attendee / occupancy limit
-     * @param location   physical campus building or floor
-     * @param restricted whether reservation requires managerial authorization
      */
     public Resource(String id, String name, ResourceType type, int capacity, String location, boolean restricted) {
-        setId(id);
+        super(id);
         setName(name);
         setType(type);
         setCapacity(capacity);
@@ -69,17 +53,6 @@ public class Resource {
         resourceCounter = base;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("Resource ID cannot be null or empty");
-        }
-        this.id = id.trim();
-    }
-
     public String getName() {
         return name;
     }
@@ -89,6 +62,7 @@ public class Resource {
             throw new IllegalArgumentException("Resource name cannot be blank");
         }
         this.name = name.trim();
+        markUpdated();
     }
 
     public ResourceType getType() {
@@ -100,6 +74,7 @@ public class Resource {
             throw new IllegalArgumentException("Resource type cannot be null");
         }
         this.type = type;
+        markUpdated();
     }
 
     public int getCapacity() {
@@ -111,6 +86,7 @@ public class Resource {
             throw new IllegalArgumentException("Resource capacity must be greater than zero. Provided: " + capacity);
         }
         this.capacity = capacity;
+        markUpdated();
     }
 
     public String getLocation() {
@@ -122,6 +98,7 @@ public class Resource {
             throw new IllegalArgumentException("Location cannot be blank");
         }
         this.location = location.trim();
+        markUpdated();
     }
 
     public boolean isRestricted() {
@@ -130,19 +107,13 @@ public class Resource {
 
     public void setRestricted(boolean restricted) {
         this.restricted = restricted;
+        markUpdated();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Resource resource = (Resource) o;
-        return Objects.equals(id, resource.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
+    public String getDisplayDetails() {
+        return String.format("[%s] %s (%s, Cap: %d, Loc: %s%s)",
+                id, name, type.getLabel(), capacity, location,
+                restricted ? ", RESTRICTED" : "");
     }
 
     @Override

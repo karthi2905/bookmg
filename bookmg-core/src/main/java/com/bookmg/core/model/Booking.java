@@ -3,42 +3,32 @@ package com.bookmg.core.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.Objects;
 
 /**
  * Domain entity representing a scheduled reservation of a Resource by a User.
- * Demonstrates encapsulation, validation, constructor chaining, static ID generation,
- * Comparable implementation, and standard object contracts.
+ * Extends BaseEntity to inherit unified identity, audit timestamps, and state tracking.
+ * Implements Comparable to enable natural chronological ordering.
  */
-public class Booking implements Comparable<Booking> {
+public class Booking extends BaseEntity implements Comparable<Booking> {
     private static int bookingCounter = 1000;
 
-    private String id;
-    private User user;
-    private Resource resource;
-    private LocalDate date;
-    private LocalTime startTime;
-    private LocalTime endTime;
-    private BookingStatus status;
-    private String purpose;
-    private LocalDateTime createdAt;
+    protected User user;
+    protected Resource resource;
+    protected LocalDate date;
+    protected LocalTime startTime;
+    protected LocalTime endTime;
+    protected BookingStatus status;
+    protected String purpose;
 
     /**
      * Default constructor for serialization / reflection.
      */
     public Booking() {
-        this.createdAt = LocalDateTime.now();
+        super();
     }
 
     /**
      * Convenience constructor chaining to full constructor with static ID generation and initial status.
-     *
-     * @param user      user creating the reservation
-     * @param resource  resource being booked
-     * @param date      scheduled calendar date
-     * @param startTime reservation start time
-     * @param endTime   reservation end time
-     * @param purpose   meeting agenda / description
      */
     public Booking(User user, Resource resource, LocalDate date, LocalTime startTime, LocalTime endTime, String purpose) {
         this(generateNextId(), user, resource, date, startTime, endTime, BookingStatus.CONFIRMED, purpose, LocalDateTime.now());
@@ -46,28 +36,20 @@ public class Booking implements Comparable<Booking> {
 
     /**
      * Primary constructor with strict validation of time bounds and entity relationships.
-     *
-     * @param id        unique reservation ID
-     * @param user      user creating the reservation
-     * @param resource  resource being booked
-     * @param date      scheduled calendar date
-     * @param startTime reservation start time
-     * @param endTime   reservation end time
-     * @param status    initial lifecycle state
-     * @param purpose   meeting agenda / description
-     * @param createdAt creation audit timestamp
      */
     public Booking(String id, User user, Resource resource, LocalDate date,
                    LocalTime startTime, LocalTime endTime, BookingStatus status,
                    String purpose, LocalDateTime createdAt) {
-        setId(id);
+        super(id);
         setUser(user);
         setResource(resource);
         setDate(date);
         setTimeSlot(startTime, endTime);
         setStatus(status);
         setPurpose(purpose);
-        this.createdAt = (createdAt != null) ? createdAt : LocalDateTime.now();
+        if (createdAt != null) {
+            setCreatedAt(createdAt);
+        }
     }
 
     /**
@@ -84,17 +66,6 @@ public class Booking implements Comparable<Booking> {
         bookingCounter = base;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("Booking ID cannot be null or empty");
-        }
-        this.id = id.trim();
-    }
-
     public User getUser() {
         return user;
     }
@@ -104,6 +75,7 @@ public class Booking implements Comparable<Booking> {
             throw new IllegalArgumentException("User cannot be null");
         }
         this.user = user;
+        markUpdated();
     }
 
     public Resource getResource() {
@@ -115,6 +87,7 @@ public class Booking implements Comparable<Booking> {
             throw new IllegalArgumentException("Resource cannot be null");
         }
         this.resource = resource;
+        markUpdated();
     }
 
     public LocalDate getDate() {
@@ -126,6 +99,7 @@ public class Booking implements Comparable<Booking> {
             throw new IllegalArgumentException("Booking date cannot be null");
         }
         this.date = date;
+        markUpdated();
     }
 
     public LocalTime getStartTime() {
@@ -148,6 +122,7 @@ public class Booking implements Comparable<Booking> {
         }
         this.startTime = startTime;
         this.endTime = endTime;
+        markUpdated();
     }
 
     public BookingStatus getStatus() {
@@ -159,6 +134,7 @@ public class Booking implements Comparable<Booking> {
             throw new IllegalArgumentException("Booking status cannot be null");
         }
         this.status = status;
+        markUpdated();
     }
 
     public String getPurpose() {
@@ -170,14 +146,7 @@ public class Booking implements Comparable<Booking> {
             throw new IllegalArgumentException("Meeting purpose cannot be blank");
         }
         this.purpose = purpose.trim();
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+        markUpdated();
     }
 
     /**
@@ -199,19 +168,6 @@ public class Booking implements Comparable<Booking> {
         int timeCmp = this.startTime.compareTo(other.startTime);
         if (timeCmp != 0) return timeCmp;
         return this.id.compareTo(other.id);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Booking booking = (Booking) o;
-        return Objects.equals(id, booking.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
     }
 
     @Override

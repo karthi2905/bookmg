@@ -29,12 +29,12 @@ class Day4EntityModelTest {
     @Test
     @DisplayName("User constructor chaining generates sequential IDs")
     void testUserConstructorChainingAndSequentialId() {
-        User u1 = new User("Alice Smith", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
-        User u2 = new User("Bob Manager", "bob@bookmg.com", Role.ROLE_MANAGER, "Sales");
+        User u1 = User.of("Alice Smith", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
+        User u2 = User.of("Bob Manager", "bob@bookmg.com", Role.ROLE_MANAGER, "Sales");
 
         assertEquals("USR-1001", u1.getId());
         assertEquals("USR-1002", u2.getId());
-        assertEquals("ALICE SMITH", u1.getName().toUpperCase());
+        assertEquals("Alice Smith", u1.getName());
         assertEquals("alice@bookmg.com", u1.getEmail());
         assertEquals(Role.ROLE_EMPLOYEE, u1.getRole());
         assertEquals("ENGINEERING", u1.getDepartment());
@@ -44,21 +44,21 @@ class Day4EntityModelTest {
     @DisplayName("User encapsulation rejects blank name or invalid email")
     void testUserEncapsulationValidation() {
         assertThrows(IllegalArgumentException.class,
-                () -> new User("", "valid@bookmg.com", Role.ROLE_EMPLOYEE, "IT"));
+                () -> User.of("", "valid@bookmg.com", Role.ROLE_EMPLOYEE, "IT"));
 
         assertThrows(IllegalArgumentException.class,
-                () -> new User("Valid Name", "invalid-email-address", Role.ROLE_EMPLOYEE, "IT"));
+                () -> User.of("Valid Name", "invalid-email-address", Role.ROLE_EMPLOYEE, "IT"));
 
         assertThrows(IllegalArgumentException.class,
-                () -> new User("Valid Name", "valid@bookmg.com", null, "IT"));
+                () -> User.of("Valid Name", "valid@bookmg.com", null, "IT"));
     }
 
     @Test
     @DisplayName("User equals and hashCode depend on unique ID")
     void testUserEqualsAndHashCode() {
-        User u1 = new User("USR-999", "Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "IT");
-        User u2 = new User("USR-999", "Alice Modified", "alice2@bookmg.com", Role.ROLE_MANAGER, "HR");
-        User u3 = new User("USR-888", "Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "IT");
+        User u1 = User.of("USR-999", "Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "IT");
+        User u2 = User.of("USR-999", "Alice Modified", "alice2@bookmg.com", Role.ROLE_MANAGER, "HR");
+        User u3 = User.of("USR-888", "Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "IT");
 
         assertEquals(u1, u2);
         assertEquals(u1.hashCode(), u2.hashCode());
@@ -112,7 +112,7 @@ class Day4EntityModelTest {
     @Test
     @DisplayName("Booking constructor chaining, ID generation and defaults")
     void testBookingConstructorChaining() {
-        User user = new User("Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
+        User user = User.of("Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
         Resource resource = new Resource("Ada Lab", ResourceType.TRAINING_LAB, 20, "Floor 3", true);
         LocalDate date = LocalDate.now().plusDays(2);
         LocalTime start = LocalTime.of(10, 0);
@@ -130,7 +130,7 @@ class Day4EntityModelTest {
     @Test
     @DisplayName("Booking validates start time must be before end time")
     void testBookingIntervalValidation() {
-        User user = new User("Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
+        User user = User.of("Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
         Resource resource = new Resource("Ada Lab", ResourceType.TRAINING_LAB, 20, "Floor 3", true);
         LocalDate date = LocalDate.now().plusDays(1);
 
@@ -144,7 +144,7 @@ class Day4EntityModelTest {
     @Test
     @DisplayName("Booking natural ordering implements Comparable by date and time")
     void testBookingComparable() {
-        User user = new User("Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
+        User user = User.of("Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
         Resource resource = new Resource("Room", ResourceType.MEETING_ROOM, 10, "Floor 1", false);
         LocalDate today = LocalDate.now();
 
@@ -166,7 +166,7 @@ class Day4EntityModelTest {
     @Test
     @DisplayName("Booking interval overlap formula behaves accurately")
     void testBookingOverlapCalculation() {
-        User user = new User("Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
+        User user = User.of("Alice", "alice@bookmg.com", Role.ROLE_EMPLOYEE, "Engineering");
         Resource resource = new Resource("Room", ResourceType.MEETING_ROOM, 10, "Floor 1", false);
         LocalDate today = LocalDate.now();
 
