@@ -1,54 +1,69 @@
 package com.bookmg.core.model;
 
-import java.util.Objects;
-
 /**
- * Domain entity representing an enterprise user eligible to reserve resources.
- * Demonstrates encapsulation, input validation, constructor chaining, static ID generation,
- * and standard object contracts.
+ * Abstract domain entity representing an enterprise user eligible to interact with BookMg.
+ * Extends BaseEntity to inherit unified identity and audit timestamps.
+ *
+ * Serves as the base class for the polymorphic role hierarchy:
+ *   - {@link Employee}
+ *   - {@link Manager}
+ *   - {@link Admin}
  */
-public class User {
+public abstract class User extends BaseEntity {
     private static int userCounter = 1000;
 
-    private String id;
-    private String name;
-    private String email;
-    private Role role;
-    private String department;
+    protected String name;
+    protected String email;
+    protected String department;
 
     /**
-     * Default constructor for serialization / framework reflection.
+     * Default constructor for frameworks and serialization.
      */
-    public User() {
+    protected User() {
+        super();
     }
 
     /**
-     * Convenience constructor demonstrating constructor chaining and static counter ID generation.
-     *
-     * @param name       full name of the user
-     * @param email      corporate email address
-     * @param role       assigned authorization role
-     * @param department organizational department
+     * Convenience constructor generating automatic sequential ID.
      */
-    public User(String name, String email, Role role, String department) {
-        this(generateNextId(), name, email, role, department);
+    protected User(String name, String email, String department) {
+        this(generateNextId(), name, email, department);
     }
 
     /**
-     * Full primary constructor with encapsulation validations.
+     * Primary base constructor with encapsulation validation.
      *
      * @param id         unique user identifier
-     * @param name       full name of the user
-     * @param email      corporate email address
-     * @param role       assigned authorization role
-     * @param department organizational department
+     * @param name       full name of the employee
+     * @param email      corporate email
+     * @param department assigned organizational unit
      */
-    public User(String id, String name, String email, Role role, String department) {
-        setId(id);
+    protected User(String id, String name, String email, String department) {
+        super(id);
         setName(name);
         setEmail(email);
-        setRole(role);
         setDepartment(department);
+    }
+
+    /**
+     * Static factory method to instantiate the appropriate concrete subclass based on Role.
+     */
+    public static User of(String name, String email, Role role, String department) {
+        return of(generateNextId(), name, email, role, department);
+    }
+
+    /**
+     * Static factory method to instantiate concrete subclass with explicit ID.
+     */
+    public static User of(String id, String name, String email, Role role, String department) {
+        if (role == null) {
+            throw new IllegalArgumentException("User role cannot be null");
+        }
+        return switch (role) {
+            case ROLE_EMPLOYEE -> new Employee(id, name, email, department);
+            case ROLE_MANAGER -> new Manager(id, name, email, department);
+            case ROLE_ADMIN -> new Admin(id, name, email, department);
+        };
     }
 
     /**
@@ -65,16 +80,33 @@ public class User {
         userCounter = base;
     }
 
-    public String getId() {
-        return id;
-    }
+    // =========================================================================
+    // Polymorphic Abstract Contract
+    // =========================================================================
 
-    public void setId(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("User ID cannot be null or empty");
-        }
-        this.id = id.trim();
-    }
+    /**
+     * Returns the assigned role for this user subclass.
+     */
+    public abstract Role getRole();
+
+    /**
+     * Indicates whether this user possesses authority to review and approve restricted bookings.
+     */
+    public abstract boolean canApproveBookings();
+
+    /**
+     * Maximum duration in hours this user may reserve a resource in a single booking.
+     */
+    public abstract int getMaxBookingHours();
+
+    /**
+     * Human-readable summary of privileges associated with this user's role.
+     */
+    public abstract String displayRoleSummary();
+
+    // =========================================================================
+    // Encapsulated Properties
+    // =========================================================================
 
     public String getName() {
         return name;
@@ -85,6 +117,7 @@ public class User {
             throw new IllegalArgumentException("User name cannot be blank");
         }
         this.name = name.trim();
+        markUpdated();
     }
 
     public String getEmail() {
@@ -96,17 +129,7 @@ public class User {
             throw new IllegalArgumentException("Invalid corporate email address: " + email);
         }
         this.email = email.trim().toLowerCase();
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        if (role == null) {
-            throw new IllegalArgumentException("User role cannot be null");
-        }
-        this.role = role;
+        markUpdated();
     }
 
     public String getDepartment() {
@@ -118,42 +141,24 @@ public class User {
             throw new IllegalArgumentException("Department cannot be blank");
         }
         this.department = department.trim().toUpperCase();
-    }
-
-    /**
-     * Overridable helper to determine if the user has approval permissions.
-     */
-    public boolean canApproveBookings() {
-        return role == Role.ROLE_ADMIN || role == Role.ROLE_MANAGER;
-    }
-
-    /**
-     * Overridable helper for maximum reservation hours.
-     */
-    public int getMaxBookingHours() {
-        return switch (role) {
-            case ROLE_ADMIN -> 24;
-            case ROLE_MANAGER -> 8;
-            case ROLE_EMPLOYEE -> 4;
-        };
+        markUpdated();
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id);
+        if (!(o instanceof User that)) return false;
+        return java.util.Objects.equals(id, that.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return java.util.Objects.hash(id);
     }
 
     @Override
     public String toString() {
-        return String.format("User[id='%s', name='%s', email='%s', role=%s, dept='%s']",
-                id, name, email, role, department);
+        return String.format("%s[id='%s', name='%s', email='%s', role=%s, dept='%s']",
+                getClass().getSimpleName(), id, name, email, getRole(), department);
     }
 }
