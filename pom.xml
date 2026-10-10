@@ -12,6 +12,7 @@
     <description>Meeting Room and Resource Booking System - Multi-module Spring Boot Microservices</description>
 
     <modules>
+        <module>bookmg-core</module>
         <module>api-gateway</module>
         <module>auth-service</module>
         <module>resource-service</module>
