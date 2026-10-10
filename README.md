@@ -139,7 +139,7 @@ docker compose up --build -d
 - [x] **PHASE 1: Auth Service (Entities, JWT 0.12.6, Register/Login, Seed Data, Security Filters, Integration Tests)**
 - [x] **PHASE 2: Resource Service (Resource Catalog CRUD, Dynamic JPA Specification Filters, Amenities, Integration Tests)**
 
-### Day 3 (Today): Core Scheduling, Concurrency & API Gateway
+### Day 3: Core Scheduling, Concurrency & API Gateway
 - [x] **PHASE 3: Booking Service Core (TimeSlot record, Entities, Atomic Interval Conflict Detection, Feign Client, Tests)**
 - [x] **PHASE 4: Recurrence Strategy & Series Cancellation (Daily, Weekly, Bi-weekly, Monthly with 3-Month Cap)**
 - [x] **PHASE 5: Approvals Workflow (Policy Factory, Restricted Assets, Manager/Admin routing)**
@@ -148,7 +148,61 @@ docker compose up --build -d
 - [x] **PHASE 8: API Gateway (Centralized Routing, Reactive JWT Validation, OpenAPI Aggregation)**
 - [x] **PHASE 10: Dockerization, CONCEPTS.md Architecture Guide & Microservice Verification**
 
-### Upcoming (Day 4):
-- [ ] **PHASE 9: React 18 + Vite Frontend SPA (Catalog, Calendar Grid, Booking Modal, Approvals, Analytics)**
+### Day 4: Core Java Domain Entities & Encapsulation
+- [x] **Three Core Domain Models (`User`, `Resource`, `Booking`)**:
+  - **Encapsulation & Validation**: All private fields with defensive validation (non-blank names, email validation, positive capacities, time interval validity).
+  - **Constructor Chaining**: Chained constructors using `this(...)` to eliminate redundant field initialization.
+  - **Static ID Generators**: Synchronized auto-incrementing counters generating sequential enterprise IDs (`USR-1001`, `RES-1001`, `BKG-1001`).
+  - **Standard Object Contracts**: Robust `equals()`, `hashCode()`, and `toString()` implementations based on unique identity.
+  - **Natural Ordering**: `Booking implements Comparable<Booking>` sorting chronologically by date and start time.
+  - **Unit Testing**: 10 comprehensive tests in `Day4EntityModelTest`.
+
+### Day 5: BaseEntity, Role Hierarchy & Strategy Pattern (Feature Branch + PR Merge)
+- [x] **Abstract `BaseEntity`**: Foundation class managing `id`, audit timestamps (`createdAt`, `updatedAt`), active state, and common entity identity.
+- [x] **Polymorphic Role Hierarchy**:
+  - Abstract base `User` with dynamic dispatch methods: `getRole()`, `canApproveBookings()`, `getMaxBookingHours()`, `displayRoleSummary()`.
+  - Concrete subclasses: `Employee` (4h cap, non-approver), `Manager` (8h cap, department approver), and `Admin` (24h cap, global approver).
+  - Specialized resource subclasses: `MeetingRoom` (room number, video conferencing) and `Equipment` (serial number, portability).
+- [x] **Strategy Pattern**:
+  - `ApprovalStrategy` interface with `AutoApprovalStrategy` (instant confirmation) and `ManagerApprovalStrategy` (routes restricted rooms to `PENDING_APPROVAL`, respects Admin override).
+  - `ApprovalPolicyEngine` dynamic context resolver.
+  - `RecurrenceStrategy` with `DailyRecurrenceStrategy` and `WeeklyRecurrenceStrategy`.
+- [x] **Git Feature Branch & PR Merge**:
+  - Developed on dedicated branch `feature/day-5-role-hierarchy-strategy`.
+  - Merged into `main` via PR simulation (`git merge --no-ff`) with merge commit `7432387`, preserving full branch history.
+  - **Unit Testing**: 8 tests in `Day5HierarchyAndStrategyTest`.
+
+### Day 6 (Today): Custom Exception Package, 2 Business Rules & Resilient Console Menu
+- [x] **Custom Exception Hierarchy (`com.bookmg.core.exception`)**:
+  - Checked Exception: `BookingConflictException` (holds conflicting reservation ID, resource ID, and requested slot).
+  - Unchecked Exceptions: `InvalidBookingException` (holds error code and policy rule reason), `ResourceNotFoundException`, and `UnauthorizedBookingException`.
+- [x] **Enforcement of 2 Core Business Rules in `BookingService`**:
+  - **Business Rule 1 (Double-Booking / Interval Overlap Conflict)**:
+    Interval overlap check ($S_1 < E_2 \land E_1 > S_2$). Adjacent slots accepted without conflict; overlaps reject with checked `BookingConflictException`.
+  - **Business Rule 2 (Operational Bounds, Duration & Role Caps)**:
+    Enforces business operating hours (08:00–20:00), non-past dates, 90-day advance ceiling, minimum 15-minute slot duration, and role-based maximum reservation hours. Violations reject with unchecked `InvalidBookingException`.
+- [x] **Interactive Console Menu with Full Error Recovery (`ConsoleMenu`)**:
+  - Robust menu loop (Options 1–7, 0 to exit).
+  - Multi-tier `try-catch` blocks catching `BookingConflictException`, `InvalidBookingException`, `ResourceNotFoundException`, `UnauthorizedBookingException`, and `DateTimeParseException`.
+  - Safe scanner buffer clearing preventing infinite loops.
+  - **The menu recovers after any error**: Displays formatted error banners and returns gracefully to the main menu prompt without crashing or dropping state.
+  - Option 7 automated demonstration exercises all 5 failure modes and proves immediate menu recovery.
+- [x] **Execution Script**: Dedicated `run_core_menu.bat` and `mvn exec:java -pl bookmg-core` for 1-click launch.
+- [x] **Unit Testing**: 12 tests in `Day6ExceptionsAndBusinessRulesTest` (30 total core tests passing).
+
+---
+
+## 7. Running the Core Java Application (Days 4–6)
+
+```bash
+# Compile and run all 30 Core Java unit tests:
+mvn clean test -pl bookmg-core
+
+# Launch the interactive error-recovering console menu:
+mvn exec:java -pl bookmg-core
+
+# Or run the Windows batch script:
+.\run_core_menu.bat
+```
 
 For in-depth architectural and concurrency details, please consult [CONCEPTS.md](file:///d:/projects/BookMg/CONCEPTS.md).

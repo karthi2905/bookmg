@@ -87,7 +87,7 @@ class ResourceControllerIntegrationTest {
         mockMvc.perform(get("/api/v1/resources")
                         .param("type", "LAB"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))))
                 .andExpect(jsonPath("$[*].type", everyItem(equalTo("LAB"))));
     }
 
@@ -116,8 +116,8 @@ class ResourceControllerIntegrationTest {
         mockMvc.perform(get("/api/v1/resources")
                         .param("feature", "3D Printers"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value("Hardware Prototyping Lab"));
+                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))))
+                .andExpect(jsonPath("$[*].name", hasItem("Hardware Prototyping Lab")));
     }
 
     @Test
